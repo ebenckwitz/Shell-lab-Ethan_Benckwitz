@@ -3,20 +3,22 @@
 import os, sys, re
 
 def beginning():
-    command = input("$ ")
     while True:
+        if 'PS1' in os.environ:
+            os.write(1, os.envrion['PS1'].encode())
+            
+        command = input('$ ')
         if command == "exit":
             break
         elif 'cd' in command:
-            cd_change = command.split()
+            directory = command.split("cd")[1].strip()
             try:
-                print("CAN YOU SEE THIS MESSAGE?")
-                os.chdir(command[1])
+                os.chdir(directory)
+                os.write(1, (os.getcwd()+"\n").encode())
             except FileNotFoundError:
                 os.write(2, ("File not found! Please try again!\n").encode())
         else:
             my_shell(command)
-        command = input("$ ")
     sys.exit(1)
 
 def my_shell(command):
@@ -34,11 +36,18 @@ def my_shell(command):
         os.write(1, ("This is a child! Child's pid=%d Parent's pid=%d\n" % (os.getpid(),pid)).encode())
 
         if '>' in args:
-            redirect = command.split('>')
+            redirect = command.split('> ')
             print(redirect[1])
             os.close(1)
             os.open(redirect[1], os.O_CREAT | os.O_WRONLY);
             os.set_inheritable(1, True)
+
+        if '<' in args:
+            redirect = command.split('< ')
+            print(redirect[1])
+            os.close(0)
+            os.open(redirect[1], os.O_RONLY)
+            os.set_inheritable(0, True)
  
         for dir in re.split(":", os.environ['PATH']): #try each directory in the path
             program = "%s/%s" % (dir, args[0])
