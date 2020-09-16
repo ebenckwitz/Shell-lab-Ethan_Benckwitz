@@ -21,12 +21,10 @@ def main():
         
         elif '|' in command:      #check for pipe command
             pipe_command(command)
-        elif 'cd' in command[0]:     #change directories
+        elif 'cd' in command:     #change directories
             directory = command.split("cd")[1].strip()
             try:
-                if len(command) > 2:
-                    os.write(2, ("Too many arguments").encode())
-                elif len(command) < 2:
+                if len(command) < 2:
                     os.write(2, ("Provide a directory").encode())
                 else:
                     os.chdir(directory)
@@ -87,15 +85,15 @@ def pipe_command(command):
 
     elif rc == 0:
         os.close(1)         #redirect child's stdout
-        fd = os.dup(pw)
+        os.dup(pw)
         os.set_inheritable(1, True)
         for fd in (pr, pw):
             os.close(fd)
-        exec_command(command[:command.index('|')])
+        exec_command(command[0:command.index('|')])
                   
     else:
         os.close(0)
-        fd = os.dup(pr)
+        os.dup(pr)
         os.set_inheritable(0, True)
         for fd in (pw, pr):
             os.close(fd)
@@ -114,4 +112,4 @@ def exec_command(command):
     sys.exit(1)                                  #terminate with error
 
 if __name__ == '__main__':
-main()
+    main()
