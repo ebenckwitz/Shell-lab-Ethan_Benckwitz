@@ -2,7 +2,7 @@
 #Author: Ethan Benckwitz
 import os, sys, re
 
-def beginning():
+def main():
     while True:
         if 'PS1' in os.environ:
             os.write(1, os.envrion['PS1'].encode())
@@ -58,7 +58,7 @@ def my_shell(command):
     else:
         waiting = os.wait()
        #os.write(1, ("Parent: Child %d terminated with exit code %d\n" % waiting).encode())
-'''
+
 def pipe_command(command):
     cmd1, cmd2 = command.split('|')    
     pr, pw = os.pipe()
@@ -73,19 +73,22 @@ def pipe_command(command):
     elif rc == 0:
         os.close(1)         #redirect child's stdout
         fd = os.dup(pw)
-        os.set_inheritable(fd, True)
+        os.set_inheritable(1, True)
         for fd in (pr, pw):
             os.close(fd)
         exec_command(command[:command.index('|') - 1])
                   
-    else:
+    elif rc > 0:
         os.close(0)
         fd = os.dup(pr)
         os.set_inheritable(0, True)
         for fd in (pw, pr):
             os.close(fd)
         exec_command(command[command.index('|') + 1:])
-'''
+    else:
+        os.write(2, ("Not working").encode())
+        sys.exit(1)
+
 def exec_command(command):
     args = command.split()
     for dir in re.split(":", os.environ['PATH']): #try each directory in the path
@@ -97,5 +100,3 @@ def exec_command(command):
             
     os.write(2, ("Command %s not found. Try again.\n" % args[0]).encode())
     sys.exit(1)                                  #terminate with error
-
-beginning()
