@@ -5,9 +5,14 @@ import os, sys, re
 def main():
     while True:
         if 'PS1' in os.environ:
-            os.write(1, os.envrion['PS1'].encode())
+            os.write(1, (os.environ['PS1']).encode())
+        else:
+            os.write(1, ("$ ").encode())
+        try:
+            command = input()
+        except EOFError:
+            sys.exit(1)
             
-        command = input('$ ')
         if command == "exit":     #exit program
             break
         
@@ -16,12 +21,16 @@ def main():
         
         elif '|' in command:      #check for pipe command
             pipe_command(command)
-            print("Can you see this?")
-        elif 'cd' in command:     #change directories
+        elif 'cd' in command[0]:     #change directories
             directory = command.split("cd")[1].strip()
             try:
-                os.chdir(directory)
-                os.write(1, (os.getcwd()+"\n").encode())
+                if len(command) > 2:
+                    os.write(2, ("Too many arguments").encode())
+                elif len(command) < 2:
+                    os.write(2, ("Provide a directory").encode())
+                else:
+                    os.chdir(directory)
+                    os.write(1, (os.getcwd()+"\n").encode())
             except FileNotFoundError:
                 os.write(2, ("File not found! Please try again!\n").encode())
         else:                     #run shell
@@ -52,12 +61,18 @@ def my_shell(command):
             os.open(redirect[1], os.O_RDONLY);
             os.set_inheritable(0, True)
             exec_command(redirect[0])
-        #except FileNotFoundError:
-        #   os.write(2, ("File not found!\n").encode())
+
+        if '/' in args[0]:    #path names
+            program = args[0]
+            try:
+                os.execve(program, args, os.environ)
+            except FileNotFoundError:
+                pass
+        
         exec_command(args)
     else:
-        waiting = os.wait()
-       #os.write(1, ("Parent: Child %d terminated with exit code %d\n" % waiting).encode())
+        if not '&' in args: #background task
+            waiting = os.wait()
 
 def pipe_command(command):
     cmd1, cmd2 = command.split('|')    
@@ -76,18 +91,18 @@ def pipe_command(command):
         os.set_inheritable(1, True)
         for fd in (pr, pw):
             os.close(fd)
-        exec_command(command[:command.index('|') - 1])
+        exec_command(command[:command.index('|')])
                   
-    elif rc > 0:
+    else:
         os.close(0)
         fd = os.dup(pr)
         os.set_inheritable(0, True)
         for fd in (pw, pr):
             os.close(fd)
         exec_command(command[command.index('|') + 1:])
-    else:
-        os.write(2, ("Not working").encode())
-        sys.exit(1)
+    #else:
+    #    os.write(2, ("Not working").encode())
+    #    sys.exit(1)
 
 def exec_command(command):
     args = command.split()
@@ -100,3 +115,6 @@ def exec_command(command):
             
     os.write(2, ("Command %s not found. Try again.\n" % args[0]).encode())
     sys.exit(1)                                  #terminate with error
+
+#if __name__ == '__main__':
+main()
