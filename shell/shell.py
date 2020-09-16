@@ -100,9 +100,6 @@ def pipe_command(command):
         for fd in (pw, pr):
             os.close(fd)
         exec_command(command[command.index('|') + 1:])
-    #else:
-    #    os.write(2, ("Not working").encode())
-    #    sys.exit(1)
 
 def exec_command(command):
     args = command.split()
@@ -116,5 +113,5 @@ def exec_command(command):
     os.write(2, ("Command %s not found. Try again.\n" % args[0]).encode())
     sys.exit(1)                                  #terminate with error
 
-#if __name__ == '__main__':
+if __name__ == '__main__':
 main()
