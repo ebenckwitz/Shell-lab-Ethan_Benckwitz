@@ -40,7 +40,7 @@ def my_shell(command):
         if ">" in args:
             redirect = command.index(">")
             os.close(1)
-            os.open(command[redirect + 1], os.O_CREAT | os.O_WRONLY)
+            os.open(command[redirect - 1], os.O_CREAT | os.O_WRONLY)
             os.set_inheritable(1, True)
             exec_command(command[0:redirect])
 
@@ -62,7 +62,7 @@ def my_shell(command):
 
     else:
         if waiting: #background task
-            os.wait()
+            result = os.wait()
 
 def pipe_command(command):
     pipe = command.index("|")
@@ -116,12 +116,15 @@ if __name__ == '__main__':
         else:
             os.write(1, ("$ ").encode())
         try:
-            command = os.read(0, 100)
+            command = os.read(0, 1024)
         except EOFError:
             sys.exit(1)
         except ValueError:
             sys.exit(1)
 
-        command = command.decode().split()
-        main(command)
+            
+        if len(command) == 0: break
+        command = command.decode().split("\n")
+        for arg in command:
+            main(arg.split())
 
